@@ -394,7 +394,7 @@ def single_dock_with_gradient(
     com = aux_coords.mean(dim=-2, keepdim=True)
     rot = rot_from_euler(euler)
     aux_coords = th.einsum('...rc,...nc->...nr', rot, aux_coords - com) + com
-    # torsion update + kabsch so it's orthogonal to rotation and translation
+    # torsion update + kabsch -> orthogonal in the tangent to rotation and translation
     for t, vals in zip(torsion_idxs, torsions.unbind(dim=-1)):
         aux_coords = update_dihedral(coords=aux_coords, idxs=t.tolist(), value=vals, dist_mat=graph_dist_mat)
 
