@@ -366,7 +366,7 @@ def single_dock_with_gradient(
             rot = rot_from_euler(euler)
             aux_coords = th.einsum('...rc,...nc->...nr', rot, aux_coords - com) + com
             pre_aux_coords = aux_coords.clone()
-            # torsion update + kabsch so it's orthogonal to rotation and translation
+            # torsion update + kabsch -> orthogonal in the tangent to rotation and translation
             for t, vals in zip(torsion_idxs, torsions.unbind(dim=-1)):
                 aux_coords = update_dihedral(coords=aux_coords, idxs=t.tolist(), value=vals, dist_mat=graph_dist_mat)
             # kabsch so 6 & T are orthogonal in the tangent -> easier to optimize
@@ -394,9 +394,11 @@ def single_dock_with_gradient(
     com = aux_coords.mean(dim=-2, keepdim=True)
     rot = rot_from_euler(euler)
     aux_coords = th.einsum('...rc,...nc->...nr', rot, aux_coords - com) + com
+    pre_aux_coords = aux_coords.clone()
     # torsion update + kabsch -> orthogonal in the tangent to rotation and translation
     for t, vals in zip(torsion_idxs, torsions.unbind(dim=-1)):
         aux_coords = update_dihedral(coords=aux_coords, idxs=t.tolist(), value=vals, dist_mat=graph_dist_mat)
+    aux_coords = kabsch(aux_coords, pre_aux_coords)
 
     cross_score, self_score, clash_score, loss = loss_func(
         aux_coords, pocket_coords, distance_predict, holo_distance_predict, reduce_batch=False
